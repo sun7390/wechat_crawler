@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlencode
 from pyquery import PyQuery as pq
+from urllib import request
 import time
 headers = {
     'cookie':'pgv_pvi=7033318400; pt2gguin=o0739014282; RK=JEgZbrswTP; ptcz=94d9e55cb78ad4b1309da5ecac909c30d35b131a77e9e3cbf7304f989204875e; pgv_pvid=9945695000; o_cookie=739014282; pac_uid=1_739014282; rewardsn=; wxtokenkey=777',
@@ -10,6 +11,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 }
 base_url = 'http://weixin.sogou.com/weixin?'
+server_url ='http://47.94.132.150:8080/front/news/third/party?filename='
 keyword = '服务型制造'
 def get_html(url):
     print('crawling',url)
@@ -49,6 +51,13 @@ def parse_detail(html):
     title = titles[0].string
     content = soup.select('.rich_media_content')
     author = soup.select('#js_name')
+    img_list =soup.find_all('img',class_='')
+    for img in img_list:
+        srcs = img.get('data-src')
+        if srcs!=None:
+            src = server_url+ srcs
+            del img['data-src']
+            img['url']= src
     for publish_time in publish_times:
         s = publish_time.string
         return{
