@@ -57,7 +57,7 @@ def parse_detail(html):
         if srcs!=None:
             src = server_url+ srcs
             del img['data-src']
-            img['url']= src
+            img['src']= src
     for publish_time in publish_times:
         s = publish_time.string
         return{
