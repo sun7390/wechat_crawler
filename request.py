@@ -12,13 +12,17 @@ table = db['test']
 data = pd.DataFrame(list(table.find()))
 s1 = data['title'].items()
 s2 = data['content'].items()
-s3 = data['sourse'].items()
+s3 = data['source'].items()
 s4 = data['date'].items()
-for (i,j,k,l) in zip(s1,s2,s3,s4):
-    payload = {'title':i[1],'text':j[1],'tagId':19,'source':k[1],'createtime':l[1]}
-   # r=requests.post(url,data=payload)
-    json_str=json.loads(r.text)
-    print(json_str['data'])
-    table.update_one({'title':i[1]},{'$set':{"return_id":json_str['data']}})
+s5 = data['upload'].items()
+for (i,j,k,l,p) in zip(s1,s2,s3,s4,s5):
+    if p[1]=='False': 
+        payload = {'title':i[1],'text':j[1],'tagId':19,'source':k[1],'createtime':l[1]}
+        r=requests.post(url,data=payload)
+        json_str=json.loads(r.text)
+        print(json_str['data'])
+        table.update_one({'title':i[1]},{'$set':{"return_id":json_str['data']}})
+        table.update_one({'title':i[1]},{'$set':{"upload":'true'}})
 
-
+    else:
+        print("already uploaded!")
