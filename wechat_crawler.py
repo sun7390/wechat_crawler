@@ -9,8 +9,8 @@ import hashlib
 import json
 import time
 headers = {
-    'cookie':'pgv_pvi=7033318400; pt2gguin=o0739014282; RK=JEgZbrswTP; ptcz=94d9e55cb78ad4b1309da5ecac909c30d35b131a77e9e3cbf7304f989204875e; pgv_pvid=9945695000; o_cookie=739014282; pac_uid=1_739014282; rewardsn=; wxtokenkey=777',
     'Host': 'weixin.sogou.com',
+    'cookie':'IPLOC=CN1100; SUID=71D5EC7C2320940A000000005B6963B3; SUV=1533633626827777; sct=62; SNUID=30EC2D566D6B1BC139300D4B6E6D840D; ad=fZllllllll2bzQnilllllVmkrDDlllllKn8qtyllllGlllll9klll5@@@@@@@@@@; LSTMV=0%2C0; LCLKINT=156; weixinIndexVisited=1; usid=OWeS46kBjSFOpc2D; CXID=76FDA8A09C522EF2C946B00505127623; wuid=AAH4RlxpIgAAAAqGGWy/QgIAGwY=; ABTEST=7|1536655011|v1; ppinf=5|1537063845|1538273445|dHJ1c3Q6MToxfGNsaWVudGlkOjQ6MjAxN3x1bmlxbmFtZToxODolRTUlODUlOUMlRTUlOUMlODh8Y3J0OjEwOjE1MzcwNjM4NDV8cmVmbmljazoxODolRTUlODUlOUMlRTUlOUMlODh8dXNlcmlkOjQ0Om85dDJsdUZmcXBLSHFZWnE0MXhWN0RVSm5iSXNAd2VpeGluLnNvaHUuY29tfA; pprdig=GSlkoGOQMPMDI-Ri7wpit9RfKve2e4hSAwUjjgzqC5MEoeCoi5vXYT_SOJlahV4iY8oW6jgB29okcTj_61zkDO7euhkIDNgixXGaGPKZZioxmzbZ6mXDo2H25VLsSGLU_ozH0NzdrzYoX6J76MvdaAzyg2uRtFJAKL6MfjaAM2k; sgid=08-36489917-AVudu6Xibcua0P4xyVeOkiaeY; ppmdig=1537857405000000be17c35cf560b735c204b4f34f13ec0a; JSESSIONID=aaaJeIF4unfgAgUH74Bvw',
     'Upgrade-Insecure-Requests': '1',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36'
 }
@@ -45,19 +45,6 @@ def parse_index(html):
     #links = soup.find_all('a',attrs={'target':'_blank'})
     for link in links:
         yield link.attr('href')
-def test_url(url):
-    md = hashlib.md5(url.encode(encoding='UTF-8')).hexdigest()
-    with open('./md5.txt','r') as f:
-        exist = False
-        lines = f.readlines()
-        for line in lines:
-            if (line==md):
-                exist =True
-        if exist == False:
-            with open('./md5.txt','a') as t:
-                t.writelines(md+'\n')
-        return exist
-                
 def get_detail(url):
      response = requests.get(url)
      if response.status_code == 200:
@@ -85,7 +72,8 @@ def parse_detail(html):
             'date':s[28:-3],
             'url':article_url,
             'source':'wechat',
-            'upload':'False'
+            'url_md5':hashlib.md5(article_url.encode(encoding='UTF-8')).hexdigest(),
+            'uploaded':false
             }
 import pymongo
 client = pymongo.MongoClient('localhost')
@@ -96,16 +84,21 @@ def save_to_mongo(data):
     else:
         print('Save to Mongo failed', data['title'])
 def main():
-    for page in range(8,101):
+    for page in range(23,101):
         html = get_index(keyword,page)
         if html:
             article_urls = parse_index(html)
             global article_url
             for article_url in article_urls:
-                if test_url(article_url)==False:
-                    article_html = get_detail(article_url)
-                    if article_html:
-                        article_data = parse_detail(article_html)
+                article_html = get_detail(article_url)
+                if article_html:
+                    article_data = parse_detail(article_html)
+                    global url_md5
+                    url_md5 = hashlib.md5(article_url.encode(encoding='UTF-8')).hexdigest()
+                    client = pymongo.MongoClient(host='localhost',port=27017)
+                    db = client['sougou-article']
+                    table = db['test']
+                    if table.find_one({'url_md5':url_md5})==None:
                         save_to_mongo(article_data)
                         time.sleep(5)
 if __name__ == '__main__':
