@@ -14,9 +14,9 @@ s1 = data['title'].items()
 s2 = data['content'].items()
 s3 = data['source'].items()
 s4 = data['date'].items()
-s5 = data['upload'].items()
+s5 = data['uploaded'].items()
 for (i,j,k,l,p) in zip(s1,s2,s3,s4,s5):
-    if p[1]=='False': 
+    if p[1]==False:
         payload = {'title':i[1],'text':j[1],'tagId':19,'source':k[1],'createtime':l[1]}
         r=requests.post(url,data=payload)
         json_str=json.loads(r.text)
